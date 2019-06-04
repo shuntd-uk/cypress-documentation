@@ -1,76 +1,75 @@
 ---
-title: Best Practices
+title: ベストプラクティス
 layout: toc-top
 ---
 
-## Organizing Tests, Logging In, Controlling State
+## テストの構成、ログイン、状態管理
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Sharing page objects, using your UI to log in, and not taking shortcuts.
-{% endnote %}
+{% fa fa-warning red %} **アンチパターン:** ページオブジェクトを共有し、ショートカットを使わずにUIからログインをする。 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Test specs in isolation, programmatically log into your application, and take control of your application's state.
+{% fa fa-check-circle green %} **ベストプラクティス:** アプリケーションの状態を管理できるように、プログラムからログインをするようにし、テストは独立して行う。
 {% endnote %}
 
-In February 2018 we gave a "Best Practices" conference talk at AssertJS. This video demonstrates how to approach writing fast, scalable tests.
+2018年2月に「ベストプラクティス」に関するプレゼンテーションを AssetJSにて行いました。このビデオではどのようにすると、早くてスケーラブルなテストを書くことができるかを紹介しています。 
 
 {% fa fa-play-circle %} {% url https://www.youtube.com/watch?v=5XQOK0v_YRE %}
 
-## Selecting Elements
+## 要素の選択
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Using highly brittle selectors that are subject to change.
-{% endnote %}
+{% fa fa-warning red %} **アンチパターン:** とても変更されやすい曖昧なセレクタを使って選択をする。{% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Use `data-*` attributes to provide context to your selectors and insulate them from CSS or JS changes.
+{% fa fa-check-circle green %} **ベストプラクティス:** `data-*` 属性を使ってセレクタに独自の情報を与え、これを使って選択することでCSSやJSの変更の影響を受けないようにする。
 {% endnote %}
 
-Every test you write will include selectors for elements. To save yourself a lot of headaches, you should write selectors that are resilient to changes.
+どんなテストを書いても、必ず要素のセレクタが出てくることでしょう。頭を悩ませないように、セレクタは変更に強いものであるべきです。
 
-Oftentimes we see users run into problems targeting their elements because:
+要素の選択に関して、しばしば、以下のような問題を見かけます。
 
-- Your application may use dynamic classes or ID's that change
-- Your selectors break from development changes to CSS styles or JS behavior
+- アプリケーションで 動的な class や id を使用し、変更が起こる。
+- 開発中にCSSのスタイルやJSの振る舞いが変わることでセレクタが変わってしまう。
 
-Luckily, it is very easy to avoid both of these problems.
+幸いなことに、これらの問題を防ぐのは簡単です。
 
-1. Don't target elements based on CSS attributes such as: `id`, `class`, `tag`
-2. Don't target elements that may change their `textContent`
-3. Add `data-*` attributes to make it easy to target elements
+1. `id`、`class`、`要素名` などの CSS の属性で要素を選択しない
+2. 要素の `textContent` が変わりそうな要素で選択しない 
+3. `data-*` 属性をつけて、簡単に要素を特定できるようにする
 
-### How It Works:
+### 実際の例:
 
-Given a button that we want to interact with:
+以下のような button 要素とやりとりをしたいとします: 
 
 ```html
-<button id="main" class="btn btn-large" data-cy="submit">Submit</button>
+<button id="main" class="btn btn-large" data-cy="submit">送信</button>
 ```
 
-Let's investigate how we could target it:
+どのように選択するかを見ていきましょう: 
 
-Selector | Recommended | Notes
+セレクタ | 推奨度 | 備考
 --- | --- | ---
-`cy.get('button').click()` | {% fa fa-warning red %} Never | Worst - too generic, no context.
-`cy.get('.btn.btn-large').click()` | {% fa fa-warning red %} Never | Bad. Coupled to styling. Highly subject to change.
-`cy.get('#main').click()` | {% fa fa-warning orange %} Sparingly | Better. But still coupled to styling or JS event listeners.
-`cy.contains('Submit').click()` | {% fa fa-check-circle green %} Depends | Much better. But still coupled to text content that may change.
-`cy.get('[data-cy=submit]').click()` | {% fa fa-check-circle green %} Always | Best. Insulated from all changes.
+`cy.get('button').click()` | {% fa fa-warning red %} 非推奨 | もっとも悪い例。汎化されすぎた呼び方で文脈がない。
+`cy.get('.btn.btn-large').click()` | {% fa fa-warning red %} 非推奨 | 悪い例. スタイルと関連付いている。変更を強くお薦めする。
+`cy.get('#main').click()` | {% fa fa-warning orange %} 要検討 | 悪くありませんが、スタイルやJavascriptのイベントと関連付く可能性があります.
+`cy.contains('Submit').click()` | {% fa fa-check-circle green %} 一部推奨 | 良い例。しかしテキストと関連づいているため、まだ変更される可能性はあります。
+`cy.get('[data-cy=submit]').click()` | {% fa fa-check-circle green %} 常に推奨 | もっとも良い例. 全ての変更可能性から切り離されています。
 
-Targeting the element above by `tag`, `class` or `id` is very volatile and highly subject to change. You may swap out the element, you may refactor CSS and update ID's, or you may add or remove classes that affect the style of the element.
+前述の要素を選択するために`要素名`、`class`、 `id` を使用するのはとても変更に弱いため、変更することを強く推奨します。
+要素の入れ替えをしたり、CSSのリファクタやIDの変更、もしくはスタイルを変更するためにクラスを追加や削除を行うでしょう。
 
-Instead, adding the `data-cy` attribute to the element gives us a targeted selector that's only used for testing.
+その代わりに、`data-cy`属性を要素につけることでテスト専用のセレクタを用意することができます。 
 
-The `data-cy` attribute will not change from CSS style or JS behavioral changes, meaning it's not coupled to the **behavior** or **styling** of an element.
+`data-cy` 属性はCSSのスタイル変更や JavaScript の振る舞いの変更に影響を受けません。それは、すなわち要素の **振る舞い** や **スタイル** に依存しないことを意味します。
 
-Additionally, it makes it clear to everyone that this element is used directly by test code.
+加えて、この属性は誰から見てもテスト用途に使われることが明確になります。
 
-{% note info "Did you know?" %}
+{% note info "ご存知ですか?" %}
 
-The {% url "Selector Playground" test-runner#Selector-Playground %} automatically follows these best practices.
+{% url "セレクタプレイグラウンド" test-runner#Selector-Playground %} はベストプラクティスに倣っています。
 
-When determining an unique selector it will automatically prefer elements with:
+ユニークなセレクタを確定させる時、以下の属性が付いている要素を優先的に抽出します: 
 
 - `data-cy`
 - `data-test`
@@ -80,39 +79,39 @@ When determining an unique selector it will automatically prefer elements with:
 
 ### Text Content:
 
-After reading the above rules you may be wondering:
+先述のルールを読んで、こう思ったかもしれません: 
 
-> If I should always use data attributes, then when should I use `cy.contains()`?
+> もしdata属性をいつもつかうなら、`cy.contains()` はいつ使うべきなんだろう？ 
 
-A simple rule of thumb is to ask yourself this:
+これに対するシンプルな原則として、以下の質問を自分にしてみてください: 
 
-If the content of the element **changed** would you want the test to fail?
+もし、要素の内容が**変更された**ら、それをテスト失敗としたいですか？ 
 
-- If the answer is yes: then use {% url `cy.contains()` contains %}
-- If the answer is no: then use a data attribute.
+- もし答えが「はい」 :  {% url `cy.contains()` contains %} を使う
+- もし答えが「いいえ」 :  data属性を使う
 
-**Example:**
+**例:**
 
-If we looked at the `<html>` of our button again...
+また同じボタンが `<html>`内にあったとしましょう... 
 
 ```html
-<button id="main" class="btn btn-large" data-cy="submit">Submit</button>
+<button id="main" class="btn btn-large" data-cy="submit">送信</button>
 ```
 
-The question is: how important is the `Submit` text content to your test? If the text changed from `Submit` to `Save` - would you want the test to fail?
+質問は「`送信` というテキストがテストにとってどのくらい重要か？」ということです。もし`送信`が`保存`になっていたら - そのテストを失敗としたいですか？
 
-If the answer is **yes** because the word `Submit` is critical and should not be changed - then use {% url `cy.contains()` contains %} to target the element. This way, if it is changed, the test will fail.
+もし答えが **はい** なら`送信` という言葉は重要で変更するべきではない - なので{% url `cy.contains()` contains %} を使って要素を選択します。この方法なら、もし変更されてもテストで失敗をします。 
 
-If the answer is **no** because the text could be changed - then use {% url `cy.get()` get %} with data attributes. Changing the text to `Save` would then not cause a test failure.
+もし答えが **いいえ** で、テキストが変更になりえる - そうならば  {% url `cy.get()` get %} で data属性を指定して要素を選択します。これだと、たとえテキストが`保存`となってもテストは失敗になりません。 
 
 ## Assigning Return Values
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Trying to assign the return value of Commands with `const`, `let`, or `var`.
+{% fa fa-warning red %} **アンチパターン:** Trying to assign the return value of Commands with `const`, `let`, or `var`.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Use {% url 'closures to access and store' variables-and-aliases %} what Commands yield you.
+{% fa fa-check-circle green %} **ベストプラクティス:** Use {% url 'closures to access and store' variables-and-aliases %} what Commands yield you.
 {% endnote %}
 
 Many first time users look at Cypress code and think it runs synchronously.
@@ -147,11 +146,11 @@ For working with either of these patterns, please read our {% url 'Variables and
 ## Visiting external sites
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Trying to visit or interact with sites or servers you do not control.
+{% fa fa-warning red %} **アンチパターン:** Trying to visit or interact with sites or servers you do not control.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Only test what you control. Try to avoid requiring a 3rd party server. When necessary, always use {% url `cy.request()` request %} to talk to 3rd party servers via their APIs.
+{% fa fa-check-circle green %} **ベストプラクティス:** Only test what you control. Try to avoid requiring a 3rd party server. When necessary, always use {% url `cy.request()` request %} to talk to 3rd party servers via their APIs.
 {% endnote %}
 
 One of the first things many of our users attempt to do is involve 3rd party servers in their tests.
@@ -214,11 +213,11 @@ Nevertheless, if you **did** want to write a test in Cypress, you already have t
 ## Having tests rely on the state of previous tests
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Coupling multiple tests together.
+{% fa fa-warning red %} **アンチパターン:** Coupling multiple tests together.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Tests should always be able to be run independently from one another **and still pass**.
+{% fa fa-check-circle green %} **ベストプラクティス:** Tests should always be able to be run independently from one another **and still pass**.
 {% endnote %}
 
 You only need to do one thing to know whether you've coupled your tests incorrectly,  or if one test is relying on the state of a previous one.
@@ -315,11 +314,11 @@ We're also paving the way to make it easy to write multiple tests against the "d
 ## Creating "tiny" tests with a single assertion
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Acting like you're writing unit tests.
+{% fa fa-warning red %} **アンチパターン:** Acting like you're writing unit tests.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Add multiple assertions and don't worry about it
+{% fa fa-check-circle green %} **ベストプラクティス:** Add multiple assertions and don't worry about it
 {% endnote %}
 
 We've seen many users writing this kind of code:
@@ -383,11 +382,11 @@ describe('my form', function () {
 ## Using `after` or `afterEach` hooks
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Using `after` or `afterEach` hooks to clean up state.
+{% fa fa-warning red %} **アンチパターン:** Using `after` or `afterEach` hooks to clean up state.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Clean up state **before** tests run.
+{% fa fa-check-circle green %} **ベストプラクティス:** Clean up state **before** tests run.
 {% endnote %}
 
 We see many of our users adding code to an `after` or `afterEach` hook in order to clean up the state generated by the current test(s).
@@ -481,11 +480,11 @@ The only times you **ever** need to clean up state, is if the operations that on
 ## Unnecessary Waiting
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Waiting for arbitrary time periods using {% url `cy.wait(Number)` wait#Time %}.
+{% fa fa-warning red %} **アンチパターン:** Waiting for arbitrary time periods using {% url `cy.wait(Number)` wait#Time %}.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Use route aliases or assertions to guard Cypress from proceeding until an explicit condition is met.
+{% fa fa-check-circle green %} **ベストプラクティス:** Use route aliases or assertions to guard Cypress from proceeding until an explicit condition is met.
 {% endnote %}
 
 In Cypress, you almost never need to use `cy.wait()` for an arbitrary amount of time. If you are finding yourself doing this, there is likely a much better, simpler way.
@@ -537,11 +536,11 @@ cy.get('table tr').should('have.length', 2)
 ## Web Servers
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Trying to a start a web server from within Cypress scripts with {% url `cy.exec()` exec %} or {% url `cy.task()` task %}.
+{% fa fa-warning red %} **アンチパターン:** Trying to a start a web server from within Cypress scripts with {% url `cy.exec()` exec %} or {% url `cy.task()` task %}.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Start a web server prior to running Cypress in the Test Runner or headless mode.
+{% fa fa-check-circle green %} **ベストプラクティス:** Start a web server prior to running Cypress in the Test Runner or headless mode.
 {% endnote %}
 
 We do NOT recommend trying to start your backend web server from within Cypress.
@@ -573,11 +572,11 @@ We have {% url 'examples showing you how to start and stop your web server' cont
 ## Setting a global baseUrl
 
 {% note danger %}
-{% fa fa-warning red %} **Anti-Pattern:** Using {% url "`cy.visit()`" visit %} without setting a `baseUrl`.
+{% fa fa-warning red %} **アンチパターン:** Using {% url "`cy.visit()`" visit %} without setting a `baseUrl`.
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **Best Practice:** Set a `baseUrl` in your `cypress.json` file.
+{% fa fa-check-circle green %} **ベストプラクティス:** Set a `baseUrl` in your `cypress.json` file.
 {% endnote %}
 
 Adding a {% url "`baseUrl`" configuration#Global %} in your configuration allows you to omit passing the `baseUrl` to commands like {% url "`cy.visit()`" visit %} and {% url "`cy.request()`" request %}. Cypress assumes this is the url you want to use.
