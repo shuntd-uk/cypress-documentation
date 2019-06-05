@@ -107,35 +107,37 @@ layout: toc-top
 ## Assigning Return Values
 
 {% note danger %}
-{% fa fa-warning red %} **アンチパターン:** Trying to assign the return value of Commands with `const`, `let`, or `var`.
+{% fa fa-warning red %} **アンチパターン:** 
+Commands実行時の返り値を`const`, `let`, `var`などの変数に代入する。
 {% endnote %}
 
 {% note success %}
-{% fa fa-check-circle green %} **ベストプラクティス:** Use {% url 'closures to access and store' variables-and-aliases %} what Commands yield you.
+{% fa fa-check-circle green %} **ベストプラクティス:** Commandsで返って来る物は {% url 'クロージャを使って保持とアクセスをします' variables-and-aliases %} 。
 {% endnote %}
 
-Many first time users look at Cypress code and think it runs synchronously.
+多くの方は初めてCypressのコードを見ると、同期的に実行されていると思われるでしょう。
 
-We see new users commonly write code that looks like this:
+Cypressを触ったばかりの人が、以下のようなコードを良く書くところをよく見かけます。:
 
 ```js
-// DONT DO THIS. IT DOES NOT WORK
-// THE WAY YOU THINK IT DOES.
+// 悪い例。動きそうですが、
+// 以下のコードは動きません。
 
 const button = cy.get('button')
 
 const form = cy.get('form')
 
-// nope, fails
+// 失敗します。
 button.click()
 ```
 
 {% note info 'Did you know?' %}
-You rarely have to ever use `const`, `let`, or `var` in Cypress. If you're using them, it's usually a sign you're doing it wrong.
+Cypress では`const`, `let`, or `var`を使う必要はありません。もし使っている場合、通常それは間違った事をしているサインです。
 {% endnote %}
 
-If you are new to Cypress and wanting to better understand how Commands work - {% url 'please read our Introduction to Cypress guide' introduction-to-cypress#Chains-of-Commands %}.
+もしあなたがCypressを触ったばかりで、Commandsがどのような仕組みなのかを知りたければ、{% url 'Cupressガイドのイントロダクションを読んでください。' introduction-to-cypress#Chains-of-Commands %}.
 
+もしあなたがCypressのCommandsに既に慣れ親しんでいるけれども、`const`, `let`, `var` を使う方法を探しているのであれば、以下2つのどちらかのアプローチを取るのが一般的です。
 If you're familiar with Cypress commands already, but find yourself using `const`, `let`, or `var` then you're typically trying to do one of two things:
 
 - You're trying to **store and compare** values such as **text**, **classes**, **attributes**.
